@@ -1,0 +1,60 @@
+import pandas as pd
+import numpy as np
+import matplotlib
+import matplotlib.pyplot as plt
+import seaborn as sns
+matplotlib.use('TkAgg')
+# Загрузка данных
+file_path = "D:\\bitcoin_data.csv"
+df = pd.read_csv(file_path, sep=';', decimal=',')  # Указываем `;` как разделитель
+
+# 1. **Обработка данных**
+# Удалим дублирования и почистим текстовые символы из "Market Cap", "Volume", и т.д.
+for col in ["Market Cap", "Volume", "Open", "Close"]:
+    df[col] = df[col].replace('[\$,\.]', '', regex=True).replace('N/A', np.nan).astype(float)
+
+# Преобразуем столбец с датами:
+df["date"] = pd.to_datetime(df["date"], format="%d.%m.%Y")
+df = df.sort_values(by="date")  # Сортировка по дате.
+
+# Просмотр информации о данных
+print("Информация о данных:")
+print(df.info())
+print("\nПример данных:")
+print(df.head())
+
+# 2. **Построение временного ряда цен (Open, Close)**
+plt.figure(figsize=(12, 6))
+plt.plot(df["date"], df["Open"], label="Open Price", color="blue")
+plt.plot(df["date"], df["Close"], label="Close Price", color="orange")
+plt.title("Временной ряд цен (Open и Close)", fontsize=16)
+plt.xlabel("Дата")
+plt.ylabel("Цена (в млн.)")
+plt.legend()
+plt.grid(True)
+plt.show()
+
+# 3. **Корреляционный анализ**
+# Вычислим корреляцию между числовыми столбцами
+numeric_columns = ["Market Cap", "Volume", "Open", "Close"]
+correlation_matrix = df[numeric_columns].corr()
+
+# Построим матрицу корреляций
+plt.figure(figsize=(10, 6))
+sns.heatmap(correlation_matrix, annot=True, fmt=".2f", cmap="coolwarm", cbar=True)
+plt.title("Матрица корреляции между показателями", fontsize=16)
+plt.show()
+
+# 4. **Построение гистограммы по объему рынка и капитализации**
+plt.figure(figsize=(12, 6))
+plt.subplot(1, 2, 1)
+sns.histplot(df["Market Cap"], bins=15, kde=True, color="blue", alpha=0.6)
+plt.title("Распределение рыночной капитализации", fontsize=14)
+plt.xlabel("Market Cap")
+
+plt.subplot(1, 2, 2)
+sns.histplot(df["Volume"], bins=15, kde=True, color="red", alpha=0.6)
+plt.title("Распределение объема торгов", fontsize=14)
+plt.xlabel("Volume")
+plt.tight_layout()
+plt.show()
